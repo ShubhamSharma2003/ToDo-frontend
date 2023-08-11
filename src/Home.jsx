@@ -26,6 +26,14 @@ function Home() {
         })
         .then(err => console.log(err));
   },[])
+
+  const handleDelete = () => {
+    axios.get('http://localhost:8081/logout')
+    .then(res =>{
+      location.reload(true);
+    }).catch(err => console.log(err));
+  }
+  
   return (
     <div className='container mt-4'>
       {
@@ -33,6 +41,7 @@ function Home() {
         <div>
           <h3>
             You Are Authorized.{name}</h3>
+            <button className='btn btn-danger' onClick={handleDelete}> logout</button>
         </div>
         :
         <div>
