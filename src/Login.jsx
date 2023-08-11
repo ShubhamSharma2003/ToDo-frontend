@@ -31,9 +31,6 @@ const handleSubmit = (event) =>{
           <h2>Login</h2>
           <form onSubmit={handleSubmit}>
             <div className='mb-3'>
-              <>
-              <p><h1>shulabh</h1></p>
-              </>
               <label htmlFor='email'>Email</label>
               <input
                 type='email'
