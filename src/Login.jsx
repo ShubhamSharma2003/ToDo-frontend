@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import {Link} from 'react-router-dom'
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import { header } from 'express-validator';
 
 function Login() {
   // eslint-disable-next-line no-undef
@@ -11,19 +12,30 @@ function Login() {
 })
 
 const navigate = useNavigate();
+
 axios.defaults.withCredentials = true;
-const handleSubmit = (event) =>{
-    event.preventDefault();
-    axios.post('http://localhost:8081/login', values)
-    .then(res => {
-        if(res.data.Status === 'Success'){
-            navigate('/');
-        } else{
-            alert(res.data.Error)
-        }
+
+const handleSubmit = (event) => {
+  event.preventDefault();
+  axios
+    .post('http://localhost:8081/login', values, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
-    .then(err => console.log(err));
-}
+    .then((res) => {
+      if (res.data.Status === 'Success') {
+        const token = res.data.token;
+        localStorage.setItem('token', token); // storing in local storage
+        axios.defaults.headers.common['Authorization'] = `${token}`;   //storing in header
+        navigate('/');
+      } else {
+        alert(res.data.Error);
+      }
+    })
+    .catch((err) => console.log(err));
+};
+
 
     return (
       <div className='d-flex justify-content-center align-items-center bg-primary vh-100'>
