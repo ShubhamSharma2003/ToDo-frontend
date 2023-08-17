@@ -17,8 +17,7 @@ axios.defaults.withCredentials = true;
 
 const handleSubmit = (event) => {
   event.preventDefault();
-  axios
-    .post('http://localhost:8081/login', values, {
+  axios.post('http://localhost:8081/login', values, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -26,8 +25,12 @@ const handleSubmit = (event) => {
     .then((res) => {
       if (res.data.Status === 'Success') {
         const token = res.data.token;
-        localStorage.setItem('token', token); // storing in local storage
-        axios.defaults.headers.common['Authorization'] = `${token}`;   //storing in header
+        const userId  = res.data.id;
+
+        localStorage.setItem('token', token); // storing token in local storage
+        localStorage.setItem('userId', userId) //storing user_id in the local storage
+
+        axios.defaults.headers.common['Authorization'] = `${token}`;  
         navigate('/');
       } else {
         alert(res.data.Error);
@@ -63,9 +66,7 @@ const handleSubmit = (event) => {
                 className='form-control rounded-0'
               />
             </div>
-            <button type='submit' className='btn btn-success w-100 rounded-0'>
-              Login
-            </button>
+            <button type='submit' className='btn btn-success w-100 rounded-0'>Login </button>
             <Link to="/register" className='btn btn-default border w-100 bg-light rounded-0 text-decoration-none'>
               Sign Up
             </Link>
