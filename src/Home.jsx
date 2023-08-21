@@ -26,6 +26,8 @@ function Home() {
   const handleDelete = () => {
     axios.get('http://localhost:8081/logout').then((res) => {
       location.reload(true);
+      localStorage.setItem('token', ""); 
+      localStorage.setItem('userId', "")
     }).catch(err => console.log(err));
   };
 

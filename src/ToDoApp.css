@@ -6,7 +6,7 @@
 .todo {
   align-items: center;
   display: flex;
-  font-size: 18px;
+  font-size: 20px;
   justify-content: space-between;
 }
 
@@ -20,6 +20,17 @@
   margin-top: 10px;
   font-size: 12px;
   color: green;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 12px;
+  color: green;
+}
+.status_incomplete{
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgb(198, 13, 28);
 }
 
 .button-container {

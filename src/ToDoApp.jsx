@@ -7,15 +7,25 @@ import {useEffect} from 'react';
 import axios from 'axios';
 import { fetchTodosByDate } from './services/api';
 
+
+const storedUserId = localStorage.getItem('userId');
+
+
 function formatDayMonth(dateString) {
   const date = new Date(dateString);
   const day = date.getDate();
   const month = date.toLocaleString('default', { month: 'short' });
   const year = date.getFullYear();
   return `${day} ${month} ${year} `;
-}
+};
+
+//--------------------------------------------------------------------------------------------------------------
 
 function Todo({ todo, index, markTodo, removeTodo }) {
+  const handleMarkTodo = () => {
+    markTodo(index);
+  };
+
   return (
     <div className="todo">
       <span style={{ textDecoration: todo.isDone ? "line-through" : "" }}>{todo.text}</span>
@@ -24,12 +34,13 @@ function Todo({ todo, index, markTodo, removeTodo }) {
         <p className="completed-time">Completed: {todo.completedTime}</p>
       )}
       <div>
-        <Button variant="outline-success" onClick={() => markTodo(index)}>Completed</Button>{' '}
+        <Button variant="outline-success" onClick={handleMarkTodo}>Completed</Button>{' '}
         <Button variant="outline-danger" onClick={() => removeTodo(index)}>Delete</Button>
       </div>
     </div>
   );
-}
+};
+//----------------------------------------------------------------------------------------------------------------
 
 function FormTodo({ addTodo }) {
   const [value, setValue] = useState("");
@@ -52,7 +63,9 @@ function FormTodo({ addTodo }) {
       </div>
     </Form>
   );
-}
+};
+
+//--------------------------------------------------------------------------------------------------------------
 
 function ToDoApp() {
 
@@ -60,10 +73,12 @@ function ToDoApp() {
   const [message, setMessage] = useState('');
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
+  const [completedTodos, setCompletedTodos] = useState([]);
+
+
   const navigate = useNavigate();
 
   axios.defaults.withCredentials = true;
-
 
   useEffect(() => {
 
@@ -71,11 +86,12 @@ function ToDoApp() {
     if (storedUserId) {
       axios.get(`http://localhost:8081/todos?id=${storedUserId}`)
         .then((res) => {
+          console.log(res)
           if (res.data.Status === 'Success') {
             setAuth(true);
             setName(res.data.name);
             setUserId(storedUserId);
-            setTodosByDate(res.data.todosByDate);
+            setTodosByDate(res.data.data);
           } else {
             setAuth(false);
             setMessage(res.data.Error);
@@ -86,34 +102,34 @@ function ToDoApp() {
       setAuth(false);
       setMessage('User ID not found');
     }
-  ;;;;;;;;
     if (storedUserId) {
       setUserId(storedUserId);
     }
   }, [])
   
 
-
 //handling todo by date
 const [todosByDate, setTodosByDate] = useState([]);
+console.log("todo data", todosByDate)
 
-  const handleFetchTodosByDate = () => {
-    fetchTodosByDate()
-      .then(response => {
-        if (response.data.Status === 'Success') {
-          setTodosByDate(response.data.todosByDate);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching todos:', error);
-      });
-  };
-
+const handleFetchTodosByDate = () => {
+  fetchTodosByDate()
+    .then(response => {
+     
+      if (response.data.Status === 'Success') {
+        setTodosByDate(response.data.todosByDate);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching todos:', error);
+    });
+};
 
 //logout functionality
   const handleDelete = () => {
     axios.get('http://localhost:8081/logout').then((res) => {
-      
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
       navigate('/login');
     }).catch(err => console.log(err));
   };
@@ -121,7 +137,6 @@ const [todosByDate, setTodosByDate] = useState([]);
 
 //adding the todos
   const [todos, setTodos] = useState([]);
-  
   const addTodo = text => {
     const newTodo = {
       text: text,
@@ -134,14 +149,9 @@ const [todosByDate, setTodosByDate] = useState([]);
     localStorage.setItem('todos', JSON.stringify(newTodos));
   
 
-    axios.post(
-      'http://localhost:8081/todo',
-      { text: text }, 
-      { withCredentials: true }
-    )
+  axios.post('http://localhost:8081/todo',{ text: text }, { withCredentials: true })
       .then(response => {
         console.log('Todo added successfully:', response.data);
-        console.log('Status:', response.status);
       })
       .catch(error => {
         console.error('Error adding todo to the database:', error);
@@ -150,9 +160,8 @@ const [todosByDate, setTodosByDate] = useState([]);
         }
       });
   };
-  
-  
-  //mark if the todo is completed or not
+
+//mark todo for the COMPLETED BUTTON
   const markTodo = index => {
     const newTodos = [...todos];
     newTodos[index].isDone = true;
@@ -160,12 +169,52 @@ const [todosByDate, setTodosByDate] = useState([]);
     setTodos(newTodos);
   };
 
-  //To remove the todo 
+
+
+  
+//mark todo as completed using the done button
+const markTodoAsCompleted = (e, todos, id) => {
+  const data= {
+    id,
+  };
+
+axios.put('http://localhost:8081/mark/todo/completed', data)
+    .then(response => {
+      console.log('Todo status marked as completed:', response.data);
+    })
+    .catch(error => {
+      console.error('Error marking todo as completed:', error);
+    });
+
+
+    //fetching the user data so that on clicling the Done button, it
+    axios.get(`http://localhost:8081/todos?id=${storedUserId}`)
+    .then((res) => {
+      console.log(res);
+      if (res.data.Status === 'Success') {
+        setAuth(true);
+        setName(res.data.name);
+        setUserId(storedUserId);
+        setTodosByDate(res.data.todosByDate);
+      } else {
+        setAuth(false);
+        setMessage(res.data.Error);
+      }
+    })
+    .catch((err) => console.log(err));
+
+
+};
+
+//To STRIKE-OUT the todo by the DELETE BUTTON
   const removeTodo = index => {
     const newTodos = [...todos];
     newTodos.splice(index, 1);
     setTodos(newTodos);
   };
+
+
+
 
 //UI form 
   return (
@@ -173,8 +222,9 @@ const [todosByDate, setTodosByDate] = useState([]);
       <div className="container">
         <h1 className="text-center mb-4">Todo List</h1>
         <div className="button-container">
-        <Button variant="primary" onClick={handleFetchTodosByDate}>Get Todos</Button>
-        <Button variant="danger" onClick={handleDelete}>Logout</Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Logout
+          </Button>
         </div>
 
         <FormTodo addTodo={addTodo} />
@@ -182,19 +232,40 @@ const [todosByDate, setTodosByDate] = useState([]);
           {todos.map((todo, index) => (
             <Card key={index}>
               <Card.Body>
-                <Todo index={index} todo={todo} markTodo={markTodo} removeTodo={removeTodo} />
+                <Todo
+                  index={index}
+                  todo={todo}
+                  markTodo={markTodo}
+                  removeTodo={removeTodo}
+                />
               </Card.Body>
             </Card>
           ))}
         </div>
+
         <div>
-          {todosByDate.map(dateGroup => (
-            <div className="date_todo" key={dateGroup.date}>
-              <h4>{formatDayMonth(dateGroup.date)}</h4>
-              {dateGroup.todos.map((todo, index) => (
+          {Object.keys(todosByDate).map((date) => (
+            <div className="date_todo" key={date}>
+              <h4>{formatDayMonth(date)}</h4>
+              {todosByDate[date].map((todo, index) => (
                 <Card key={index}>
+                  {console.log("todo", todo)}
                   <Card.Body>
-                    <p>{todo}</p>
+                    <p>{todo.todo}</p>
+                    {todo.status !== null ? (
+                      <p className="status">Status: {todo.status}</p>
+                    ) : (
+                      <p className="status_incomplete">Status: Incomplete</p>
+                    )}
+                    <div>
+                      {todo.status !== "completed" && (
+                        <Button
+                          variant="outline-success"
+                          onClick={(e) => markTodoAsCompleted(e, todo, todo.id)}>
+                          Done
+                        </Button>
+                      )}
+                    </div>
                   </Card.Body>
                 </Card>
               ))}

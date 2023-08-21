@@ -19,7 +19,6 @@ function Register() {
         event.preventDefault();
         axios.post('http://localhost:8081/register', values)
         .then(res => {
-          console.log(res.data,"response_data");
             if(res.data.Status === " Success "){
               navigate('/login');
             }else{
