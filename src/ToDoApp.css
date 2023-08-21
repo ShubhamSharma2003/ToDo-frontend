@@ -8,6 +8,7 @@
   display: flex;
   font-size: 20px;
   justify-content: space-between;
+  
 }
 
 .added-time {
@@ -24,22 +25,36 @@
 
 .status {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 15px;
   color: green;
 }
 .status_incomplete{
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 15px;
   color: rgb(198, 13, 28);
 }
 
 .button-container {
-  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
   display: flex;
   gap: 10px; 
-  margin-bottom: 20px; 
+  margin-bottom: 5px; 
 }
 
 .date_todo{
-  margin-top: 30px;
+  margin-top:20px;
+  font-weight: bold;
+
+}
+
+.todo-item{
+  font-size: 20px;
+  font-weight: bold;
+  color: #333; 
+}
+
+.add-todo-label {
+  font-size: 1.5rem; 
 }

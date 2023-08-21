@@ -16,7 +16,7 @@ function formatDayMonth(dateString) {
   const day = date.getDate();
   const month = date.toLocaleString('default', { month: 'short' });
   const year = date.getFullYear();
-  return `${day} ${month} ${year} `;
+  return `${day} ${month} ${year}`;
 };
 
 //--------------------------------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ function FormTodo({ addTodo }) {
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group>
-        <Form.Label><b>Add Todo</b></Form.Label>
+        <Form.Label className="add-todo-label"><b>Add Todo</b></Form.Label>
         <Form.Control type="text" className="input" value={value} onChange={e => setValue(e.target.value)} placeholder="Add new todo" />
       </Form.Group>
       <div className="button-container">
@@ -86,7 +86,7 @@ function ToDoApp() {
     if (storedUserId) {
       axios.get(`http://localhost:8081/todos?id=${storedUserId}`)
         .then((res) => {
-          console.log(res)
+          // console.log(res)
           if (res.data.Status === 'Success') {
             setAuth(true);
             setName(res.data.name);
@@ -110,7 +110,7 @@ function ToDoApp() {
 
 //handling todo by date
 const [todosByDate, setTodosByDate] = useState([]);
-console.log("todo data", todosByDate)
+// console.log("todo data", todosByDate)
 
 const handleFetchTodosByDate = () => {
   fetchTodosByDate()
@@ -213,7 +213,25 @@ axios.put('http://localhost:8081/mark/todo/completed', data)
     setTodos(newTodos);
   };
 
-
+//To REmove the todo from the database using the remove button
+const handleRemoveTodo = (todoId) => {
+  axios.delete(`http://localhost:8081/todo/${todoId}`, { withCredentials: true })
+      .then((response) => {
+          console.log('Todo removed successfully:', response.data);
+          // Update the state to remove the todo
+          const updatedTodosByDate = { ...todosByDate };
+          for (const date in updatedTodosByDate) {
+              updatedTodosByDate[date] = updatedTodosByDate[date].filter(todo => todo.id !== todoId);
+          }
+          setTodosByDate(updatedTodosByDate);
+      })
+      .catch((error) => {
+          console.error('Error removing todo from the database:', error);
+          if (error.response) {
+              console.log('Status:', error.response.status);
+          }
+      });
+};
 
 
 //UI form 
@@ -244,27 +262,34 @@ axios.put('http://localhost:8081/mark/todo/completed', data)
         </div>
 
         <div>
+        <h3 className="text-center mb-4"><u>Here Are your ToDo's</u></h3>
           {Object.keys(todosByDate).map((date) => (
             <div className="date_todo" key={date}>
               <h4>{formatDayMonth(date)}</h4>
               {todosByDate[date].map((todo, index) => (
                 <Card key={index}>
-                  {console.log("todo", todo)}
                   <Card.Body>
-                    <p>{todo.todo}</p>
+                    <p className="todo-item">{todo.todo}</p>
                     {todo.status !== null ? (
                       <p className="status">Status: {todo.status}</p>
                     ) : (
                       <p className="status_incomplete">Status: Incomplete</p>
                     )}
-                    <div>
+                    <div className="button-container">
                       {todo.status !== "completed" && (
                         <Button
                           variant="outline-success"
-                          onClick={(e) => markTodoAsCompleted(e, todo, todo.id)}>
+                          onClick={(e) => markTodoAsCompleted(e, todo, todo.id)}
+                        >
                           Done
                         </Button>
                       )}
+                      <Button
+                        variant="outline-danger"
+                        onClick={() => handleRemoveTodo(todo.id)}
+                      >
+                        Remove
+                      </Button>
                     </div>
                   </Card.Body>
                 </Card>
