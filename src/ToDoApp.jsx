@@ -44,50 +44,49 @@ function Todo({ todo, index, markTodo, removeTodo }) {
 //----------------------------------------------------------------------------------------------------------------
 
 
-
-function FormTodo({ addTodo }) {
+function FormTodo({ addTodo, todos, setTodos }) {
   const [value, setValue] = useState("");
 
-  const handleSubmit = async e => {
+  const handleDataSubmit = async e => {
     e.preventDefault();
     if (!value) return;
-    addTodo(value);
-    setValue("");
-    await fetchdatabyid(); 
-  };
 
-  const fetchDataAndUpdateState = async () => {
-    try {
-      const data = await fetchdatabyid();
-      setTodosByDate(data.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  
-
-  const handleDataSubmit = (e)=> {
-    e.preventDefault();
-    if (!value) return;
     addTodo(value);
+
     setValue("");
-    fetchdatabyid();
-    fetchTodosByDate();
-  }
-  
+
+    await fetchdatabyid();
+    await fetchTodosByDate();
+
+    // window.location.reload();
+  };
 
   return (
-    <Form >
+    <Form>
       <Form.Group>
-        <Form.Label className="add-todo-label"><b>Add Todo</b></Form.Label>
-        <Form.Control type="text" className="input" value={value} onChange={e => setValue(e.target.value)} placeholder="Add new todo" />
+        <Form.Label className="add-todo-label">
+          <b>Add Todo</b>
+        </Form.Label>
+        <Form.Control
+          type="text"
+          className="input"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder="Add new todo"
+        />
       </Form.Group>
       <div className="button-container">
-      <Button variant="primary mb-3" type="submit" onClick={(e)=> handleDataSubmit(e)}>Submit</Button>
+        <Button
+          variant="primary mb-3"
+          type="submit"
+          onClick={handleDataSubmit}
+        >
+          Submit
+        </Button>
       </div>
     </Form>
   );
-};
+}
 
 //--------------------------------------------------------------------------------------------------------------
 
@@ -101,7 +100,7 @@ function ToDoApp() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTodoText, setEditTodoText] = useState("");
   const [editTodoId, setEditTodoId] = useState("");
-  const [todosByDate, setTodosByDate] = useState([]);
+  const [todosByDate, setTodosByDate] = useState({});
 
 
   const navigate = useNavigate();
@@ -109,41 +108,31 @@ function ToDoApp() {
   axios.defaults.withCredentials = true;
 
 
-  
-
   useEffect(() => {
-
     letsDats();
-    //handleFetchTodosByDate();
-    // markTodoAsCompleted();
-    // handleCloseEditModal();
-    // editTodo();
     
   }, [])
 
   const letsDats = async () =>{
     let data = await fetchdatabyid();
-    //console.log(data,"NEW///////////////////////////////");
     setTodosByDate(data.data)
 
   }
-  //console.log(todosByDate,'llllllllllllllllllllllllllllllllllllllllllllll')
 
 
 //handling todo by date
-console.log("todo data", todosByDate)
+//console.log("todo data", todosByDate)
 
-const handleFetchTodosByDate = () => {
-  fetchTodosByDate()
-    .then(response => {
-     
-      if (response.data.Status === 'Success') {
-        setTodosByDate(response.data.todosByDate);
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching todos:', error);
-    });
+const fetchTodosByDate = () => {
+  axios.get('http://localhost:8081/todos', {
+    withCredentials: true
+  })
+  .then(response => {
+    setTodosByDate(response.data.data); 
+  })
+  .catch(error => {
+    console.error('Error fetching todos by date:', error);
+  });
 };
 
 //logout functionality
@@ -155,6 +144,17 @@ const handleFetchTodosByDate = () => {
     }).catch(err => console.log(err));
   };
 
+    const updateTodosByDate = () => {
+    fetchTodosByDate()
+      .then(response => {
+        if (response.data.Status === 'Success') {
+          setTodosByDate(response.data.todosByDate);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching todos:', error);
+      });
+  };
 
 //adding the todos
   const [todos, setTodos] = useState([]);
@@ -193,34 +193,29 @@ const handleFetchTodosByDate = () => {
 
 
 //mark todo as completed using the done button
-const markTodoAsCompleted = (e, todos, id) => {
-  const data= {
-    id,
-  };
 
-axios.put('http://localhost:8081/mark/todo/completed', data)
+const handleMarkAsCompleted = (id) => {
+  axios.put('http://localhost:8081/mark/todo/completed', { id })
     .then(response => {
       console.log('Todo status marked as completed:', response.data);
+      setTodosByDate(prevTodosByDate => {
+        const updatedTodosByDate = { ...prevTodosByDate };
+        for (const date in updatedTodosByDate) {
+          updatedTodosByDate[date] = updatedTodosByDate[date].map(todo => {
+            if (todo.id === id) {
+              return { ...todo, status: 'completed' };
+            }
+            return todo;
+          });
+        }
+        return updatedTodosByDate;
+      });
     })
     .catch(error => {
       console.error('Error marking todo as completed:', error);
     });
-    //fetching the user data so that on clicling the Done button, it
-    // axios.get(`http://localhost:8081/todos?id=${storedUserId}`)
-    // .then((res) => {
-    //   console.log(res);
-    //   if (res.data.Status === 'Success') {
-    //     setAuth(true);
-    //     setName(res.data.name);
-    //     setUserId(storedUserId);
-    //     setTodosByDate(res.data.todosByDate);
-    //   } else {
-    //     setAuth(false);
-    //     setMessage(res.data.Error);
-    //   }
-    // })
-    // .catch((err) => console.log(err));
 };
+
 
 //To STRIKE-OUT the todo by the DELETE BUTTON
   const removeTodo = index => {
@@ -228,6 +223,7 @@ axios.put('http://localhost:8081/mark/todo/completed', data)
     newTodos.splice(index, 1);
     setTodos(newTodos);
   };
+
 
 //To Remove the todo from the database using the remove button
 const handleRemoveTodo = (todoId) => {
@@ -250,7 +246,6 @@ const handleRemoveTodo = (todoId) => {
 };
 
 //editing the todo from the frontend
-
 const handleOpenEditModal = (todo) => {
   setEditTodoText(todo.todo);
   setEditTodoId(todo.id);
@@ -263,29 +258,41 @@ const handleCloseEditModal = () => {
   setEditTodoId('');
 };
 
-
 //console.log("Current todos:", todos); 
 //editing the existing todo
 const editTodo = (todoId, updatedText, todos) => {
   axios.put(`http://localhost:8081/todo/${todoId}`,{ updatedText })
     .then((response) => {
-      
-      // console.log(response.data.Status);
-      
-      // const updatedTodos = todos.map(todo => {
-      //   if (todo.id === todoId) {
-      //     return { ...todo, text: updatedText };
-      //   }
-      //   return todo;
-      // });
+      const updatedData = { ...todosByDate };
+      for (const date in updatedData) {
+        updatedData[date] = updatedData[date].map(todo => {
+          if (todo.id === todoId) {
+            return { ...todo, todo: updatedText };
+          }
+          return todo;
+        });
+      }
+      setTodosByDate(updatedData);
 
-      // setTodos(updatedTodos); 
-      // handleCloseEditModal();
-      
     })
     .catch((error) => {
       console.error(error);
     });
+};
+
+const handleEditSubmit = () => {
+  // Updating the local state with the new edited text
+  const updatedTodos = todos.map(todo => {
+    if (todo.id === editTodoId) {
+      return { ...todo, text: editTodoText };
+    }
+    return todo;
+  });
+  setTodos(updatedTodos);
+
+  editTodo(editTodoId, editTodoText, updatedTodos);
+  
+  handleCloseEditModal(); 
 };
 
 //console.log(todos,"todos data");
@@ -300,7 +307,6 @@ const editTodo = (todoId, updatedText, todos) => {
             Logout
           </Button>
         </div>
-
         <FormTodo addTodo={addTodo} />
         <div>
           {todos.map((todo, index) => (
@@ -316,7 +322,6 @@ const editTodo = (todoId, updatedText, todos) => {
             </Card>
           ))}
         </div>
-
         <div>
           <h3 className="text-center mb-4">
             <u>Here Are your ToDo's</u>
@@ -324,23 +329,22 @@ const editTodo = (todoId, updatedText, todos) => {
           {Object.keys(todosByDate).map((date) => (
             <div className="date_todo" key={date}>
               <h4>{formatDayMonth(date)}</h4>
+              
               {todosByDate[date].map((todo, index) => (
                 <Card key={index}>
                   <Card.Body>
                     <p className="todo-item">{todo.todo}</p>
-                    {todo.status != null ? (
-                      <p className="status">Status: {todo.status}</p>
-                    ) : (
-                      <p className="status_incomplete">Status: Incomplete</p>
-                    )}
+
                     <div className="button-container">
-                      {todo.status != "completed" && (
+                      {todo.status !== "completed" ? (
                         <Button
                           variant="outline-success"
-                          onClick={(e) => markTodoAsCompleted(e, todo, todo.id)}
+                          onClick={() => handleMarkAsCompleted(todo.id)}
                         >
                           Done
                         </Button>
+                      ) : (
+                        <p className="status">Status: Completed</p>
                       )}
                       <Button
                         variant="outline-primary"
@@ -362,7 +366,7 @@ const editTodo = (todoId, updatedText, todos) => {
           ))}
         </div>
 
-        //modal text box for the implementation of the edit ToDo Func.
+
         <Modal show={showEditModal} onHide={handleCloseEditModal}>
           <Modal.Header closeButton>
             <Modal.Title>Edit Todo</Modal.Title>
@@ -380,11 +384,7 @@ const editTodo = (todoId, updatedText, todos) => {
             </Button>
             <Button
               variant="primary"
-              onClick={() => {
-                editTodo(editTodoId, editTodoText, todos); 
-                handleCloseEditModal(); 
-                //window.alert('Todo updated successfully!');
-              }}
+              onClick={handleEditSubmit} // Call your edit submit function
             >
               Save Changes
             </Button>
