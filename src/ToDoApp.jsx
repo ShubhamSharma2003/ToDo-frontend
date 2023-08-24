@@ -8,8 +8,16 @@ import axios from 'axios';
 import { fetchTodosByDate } from './services/api';
 import { Modal } from 'react-bootstrap';
 import {fetchdatabyid} from './action/formaction'
+import history from "./history";
+
 
 const storedUserId = localStorage.getItem('userId');
+
+if(localStorage.getItem('token') === null || localStorage.getItem('token') === " " ){
+  //console.log('todo component')
+ history.push("/")
+}
+
 
 function formatDayMonth(dateString) {
   const date = new Date(dateString);
@@ -45,16 +53,14 @@ function Todo({ todo, index, markTodo, removeTodo }) {
 
 
 function FormTodo({ addTodo, todos, setTodos }) {
+  
   const [value, setValue] = useState("");
 
   const handleDataSubmit = async e => {
     e.preventDefault();
     if (!value) return;
-
     addTodo(value);
-
     setValue("");
-
     await fetchdatabyid();
     await fetchTodosByDate();
 
@@ -87,9 +93,7 @@ function FormTodo({ addTodo, todos, setTodos }) {
     </Form>
   );
 }
-
 //--------------------------------------------------------------------------------------------------------------
-
 function ToDoApp() {
 
   const [auth, setAuth] = useState(false);
@@ -102,8 +106,7 @@ function ToDoApp() {
   const [editTodoId, setEditTodoId] = useState("");
   const [todosByDate, setTodosByDate] = useState({});
 
-
-  const navigate = useNavigate();
+  const navigate = useNavigate();  
 
   axios.defaults.withCredentials = true;
 
@@ -115,8 +118,8 @@ function ToDoApp() {
 
   const letsDats = async () =>{
     let data = await fetchdatabyid();
+    console.log(data);
     setTodosByDate(data.data)
-
   }
 
 
@@ -384,7 +387,7 @@ const handleEditSubmit = () => {
             </Button>
             <Button
               variant="primary"
-              onClick={handleEditSubmit} // Call your edit submit function
+              onClick={handleEditSubmit} 
             >
               Save Changes
             </Button>

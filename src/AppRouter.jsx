@@ -6,9 +6,9 @@ import ToDoApp from './ToDoApp';
 import Login from './Login'
 import Register from './Register'
 
-
 function AppRouter() {
   return (
+    
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
